@@ -169,35 +169,35 @@ def turn():
     else:
         if(ORIENTATION == "WEST"):
             if(NEW_ORIENTATION == "NORTH"):
-                turn_angle(np.pi/2) #CW
+                turn_angle(-np.pi/2.2) #CW
             elif(NEW_ORIENTATION == "EAST"):
-                turn_angle(np.pi) #turn backwards
+                turn_angle(-np.pi) #turn backwards
             elif(NEW_ORIENTATION == "SOUTH"):
-                turn_angle(-np.pi/2) #CCW
+                turn_angle(np.pi/1.8) #CCW
                 
         if(ORIENTATION == "EAST"):
             if(NEW_ORIENTATION == "NORTH"):
-                turn_angle(-np.pi/2) #CCW
+                turn_angle(np.pi/1.8) #CCW
             elif(NEW_ORIENTATION == "WEST"):
-                turn_angle(np.pi) #turn backwards
+                turn_angle(-np.pi) #turn backwards
             elif(NEW_ORIENTATION == "SOUTH"):
-                turn_angle(np.pi/2) #CW
+                turn_angle(-np.pi/2.2) #CW
                 
         if(ORIENTATION == "SOUTH"):
             if(NEW_ORIENTATION == "EAST"):
-                turn_angle(-np.pi/2) #CCW
+                turn_angle(np.pi/1.8) #CCW
             elif(NEW_ORIENTATION == "NORTH"):
-                turn_angle(np.pi) #turn backwards
+                turn_angle(-np.pi) #turn backwards
             elif(NEW_ORIENTATION == "WEST"):
-                turn_angle(np.pi/2) #CW
+                turn_angle(-np.pi/2.2) #CW
                 
         if(ORIENTATION == "NORTH"):
             if(NEW_ORIENTATION == "WEST"):
-                turn_angle(-np.pi/2) #CCW
+                turn_angle(np.pi/1.8) #CCW
             elif(NEW_ORIENTATION == "SOUTH"):
-                turn_angle(np.pi) #turn backwards
+                turn_angle(-np.pi) #turn backwards
             elif(NEW_ORIENTATION == "EAST"):
-                turn_angle(np.pi/2) #CW
+                turn_angle(-np.pi/2.2) #CW
     ORIENTATION = NEW_ORIENTATION
 
 def main():
@@ -254,4 +254,3 @@ def main():
 if __name__== "__main__":
     main()
     
-
