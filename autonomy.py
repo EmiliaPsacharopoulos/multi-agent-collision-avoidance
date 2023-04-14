@@ -103,7 +103,7 @@ def turn_angle(angle):
                 lc.publish("MBOT_TIMESYNC", rotate_time.encode())
                 lc.publish("MBOT_MOTOR_COMMAND", rotate.encode())
                 time.sleep(0.1)
-        
+
     # Stop
     stop = mbot_motor_command_t()
     stop.utime = current_utime()
@@ -140,7 +140,7 @@ def drive_forward(vel, duration):
     lc.publish("MBOT_TIMESYNC", stop_time.encode())
     lc.publish("MBOT_MOTOR_COMMAND", stop.encode())
     time.sleep(0.1)
-    
+
 
 lc = lcm.LCM("udpm://239.255.76.67:7667?ttl=1")
 
@@ -169,35 +169,35 @@ def turn():
     else:
         if(ORIENTATION == "WEST"):
             if(NEW_ORIENTATION == "NORTH"):
-                turn_angle(-np.pi/2.2) #CW
+                turn_angle(np.pi/2) #CW
             elif(NEW_ORIENTATION == "EAST"):
-                turn_angle(-np.pi) #turn backwards
+                turn_angle(np.pi) #turn backwards
             elif(NEW_ORIENTATION == "SOUTH"):
-                turn_angle(np.pi/1.8) #CCW
-                
+                turn_angle(-np.pi/2) #CCW
+
         if(ORIENTATION == "EAST"):
             if(NEW_ORIENTATION == "NORTH"):
-                turn_angle(np.pi/1.8) #CCW
+                turn_angle(-np.pi/2) #CCW
             elif(NEW_ORIENTATION == "WEST"):
-                turn_angle(-np.pi) #turn backwards
+                turn_angle(np.pi) #turn backwards
             elif(NEW_ORIENTATION == "SOUTH"):
-                turn_angle(-np.pi/2.2) #CW
-                
+                turn_angle(np.pi/2) #CW
+
         if(ORIENTATION == "SOUTH"):
             if(NEW_ORIENTATION == "EAST"):
-                turn_angle(np.pi/1.8) #CCW
+                turn_angle(-np.pi/2) #CCW
             elif(NEW_ORIENTATION == "NORTH"):
-                turn_angle(-np.pi) #turn backwards
+                turn_angle(np.pi) #turn backwards
             elif(NEW_ORIENTATION == "WEST"):
-                turn_angle(-np.pi/2.2) #CW
-                
+                turn_angle(np.pi/2) #CW
+
         if(ORIENTATION == "NORTH"):
             if(NEW_ORIENTATION == "WEST"):
-                turn_angle(np.pi/1.8) #CCW
+                turn_angle(-np.pi/2) #CCW
             elif(NEW_ORIENTATION == "SOUTH"):
-                turn_angle(-np.pi) #turn backwards
+                turn_angle(np.pi) #turn backwards
             elif(NEW_ORIENTATION == "EAST"):
-                turn_angle(-np.pi/2.2) #CW
+                turn_angle(np.pi/2) #CW
     ORIENTATION = NEW_ORIENTATION
 
 def main():
@@ -205,12 +205,12 @@ def main():
     path = client.my_client()
     print(path)
     print("row: ", len(path), "; col: ", len(path[0]))
-    
+
     print("creating LCM ...")
     lcm_kill_thread = Thread(target = handle_lcm, args= (lc, ), daemon = True)
     lcm_kill_thread.start()
     time.sleep(0.1)
-    
+
     print('resetting odometry')
     reset_odometry_msg = reset_odometry_t()
     lc.publish("RESET_ODOMETRY", reset_odometry_msg.encode())
@@ -233,10 +233,17 @@ def main():
     for i in range(len(path)-1): #**************CHECK WITH YUCHEN THE MAX NUMBER OF STEPS*******************************
         STARTX = path[i][0] #UPDATE CURRENT POSITION
         STARTY = path[i][1]
-        if (path[i+1][0] == 0 & path[i+1][1] == 0):
+        if (path[i+1][0] == path[i][0] & path[i+1][1] ==  path[i][1]):
             #do nothing; ending condition
             dummy = 1
-        else:            
+        else:    
+            orientation(i+1,path)
+            turn()
+            time.sleep(1)
+
+            drive_forward(0.3048,1) #theoretically what it takes to move 1 foot per second
+            time.sleep(1)    
+            """    
             if i == 0:
                 #starting coordinate for the selected robot
                 drive_forward(0.3048,1) #theoretically what it takes to move 1 foot per second
@@ -246,11 +253,14 @@ def main():
                 orientation(i+1,path)
                 turn()
                 time.sleep(1)
-                
+
                 drive_forward(0.3048,1) #theoretically what it takes to move 1 foot per second
                 time.sleep(1)
-    
+"""
+                
+                
+                
 
 if __name__== "__main__":
     main()
-    
+
