@@ -114,6 +114,7 @@ if __name__ == '__main__':
             print("***Test paths on a simulation***")
             animation = Animation(my_map, starts, goals, paths)
             # animation.save("animation/output_{}.gif".format(file[10:-4]), 1.0)
+            animation.save("MAPF/animation/output_demo.gif", 1.0)
             animation.show()
             # writergif = animation.PillowWriter(fps=30)
             # animation.save("animation/output_{}.gif".format(file[:-4]),writer=writergif)

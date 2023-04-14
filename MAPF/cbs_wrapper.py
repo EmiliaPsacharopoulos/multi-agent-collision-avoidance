@@ -65,7 +65,7 @@ def import_mapf_instance(filename):
 
 def transform_paths(paths):
 
-    print(paths)
+    #print(paths)
 
     transformed_paths = []
 
@@ -80,7 +80,7 @@ def transform_paths(paths):
         
         transformed_paths.append(new_path)
     
-    print(transformed_paths)
+    #print(transformed_paths)
     return transformed_paths
 
 class CBS_WRAPPER(object):
