@@ -6,9 +6,9 @@ from lcmtypes import odometry_t
 from lcmtypes import reset_odometry_t
 from threading import Thread, Lock, current_thread
 
-DRIVE_LENGTH = 3
+DRIVE_LENGTH = 2
 STOP_LENGTH = 0.5
-ROTATE_LENGTH = 3
+ROTATE_LENGTH = 2
 WHEEL_BASE = 0.15
 WHEEL_DIAMETER = 0.084
 
@@ -30,7 +30,6 @@ def odometry_message_handler(channel, data):
     curr_odometry = odometry_t.decode(data)
 
 def turn_angle(angle):
-    angle = angle * 0.92
     prev_theta = curr_odometry.theta
 
     if (angle >= 0):
@@ -114,7 +113,7 @@ def drive_forward(vel, duration):
     drive = mbot_motor_command_t()
     drive.utime = current_utime()
     drive.trans_v = vel
-    drive.angular_v = 0.0
+    drive.angular_v =-0.1 #CHANGE THE ANGULAR VELOCITY
 
     drive_time = timestamp_t()
     drive_time.utime = drive.utime
@@ -144,10 +143,10 @@ def main():
     lcm_kill_thread.start()
     time.sleep(0.1)
 
-    print('resetting odometry')
-    reset_odometry_msg = reset_odometry_t()
-    lc.publish("RESET_ODOMETRY", reset_odometry_msg.encode())
-    time.sleep(0.1)
+    # print('resetting odometry')
+    # reset_odometry_msg = reset_odometry_t()
+    # lc.publish("RESET_ODOMETRY", reset_odometry_msg.encode())
+    # time.sleep(0.1)
 
     drive_time = timestamp_t()
     drive_time.utime = current_utime()
@@ -168,8 +167,14 @@ def main():
     # drive_forward(1,1)
     # time.sleep(2)
    
-    turn_angle(-np.pi/2)
-    time.sleep(1)
+    turn_angle(np.pi/2.13) #CW --> CHANGE THE DENOMINATOR
+    time.sleep(0.5)
+    turn_angle(-np.pi/2.14) #CCW --> CHANGE THE DENOMINATOR
+    time.sleep(0.5)
+    drive_forward(0.155,2) # CHANGE THE VELOCITY 
+    #turn_angle(-np.pi/2.14) #CCW
+    time.sleep(0.5)
+    # drive_forward(0.3048,1)
 
     
 
