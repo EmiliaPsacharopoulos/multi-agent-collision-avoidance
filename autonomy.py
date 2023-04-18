@@ -6,18 +6,34 @@ from lcmtypes import odometry_t
 from lcmtypes import reset_odometry_t
 from threading import Thread, Lock, current_thread
 import client
+import sys
 
-DRIVE_LENGTH = 2
-STOP_LENGTH = 0.5
-ROTATE_LENGTH = 2
-WHEEL_BASE = 0.15
-WHEEL_DIAMETER = 0.084
-STARTX = 0 #start means the current coordinate
-STARTY = 0 #start means the current coordinate
-ORIENTATION = "NORTH"
+
+STARTX = 0              # Start means the current coordinate
+STARTY = 0
+ORIENTATION = None
+NEW_ORIENTATION = None
 ROW = 0
-NEW_ORIENTATION = "NORTH"
+DISTANCE_FACTOR = 0.123 # Larger - Longer; Smaller - Shorter (Control the 12 inches)
+DRIFT_FACTOR = 0.02     # Postive - Left ; Negative - Right
+# Turn Factors
+R_TURN_P = 2.35         # CW #SPECIFIC TO EACH MBOT
+L_TURN_P = 2.0          # CCW #SPECIFIC TO EACH MBOT
+
 curr_odometry = None
+
+
+def get_init_orientation(x, y):
+    orientation = None
+    if x == 0:
+        orientation = "EAST"
+    if y == 4:
+        orientation = "SOUTH"
+    if x == 4:
+        orientation = "WEST"
+    if y == 0:
+        orientation = "NORTH"
+    return orientation
 
 
 def handle_lcm(lcm_obj):
@@ -29,11 +45,14 @@ def handle_lcm(lcm_obj):
         sys.exit()
 
 
-def current_utime(): return int(time.time() * 1e6)
+def current_utime(): 
+    return int(time.time() * 1e6)
+
 
 def odometry_message_handler(channel, data):
     global curr_odometry
     curr_odometry = odometry_t.decode(data)
+
 
 def turn_angle(angle):
     prev_theta = curr_odometry.theta
@@ -115,11 +134,13 @@ def turn_angle(angle):
     lc.publish("MBOT_MOTOR_COMMAND", stop.encode())
     time.sleep(0.1)
 
+
 def drive_forward(vel, duration):
+    global DRIFT_FACTOR
     drive = mbot_motor_command_t()
     drive.utime = current_utime()
     drive.trans_v = vel
-    drive.angular_v = -0.1 #SPECIFIC TO EACH MBOT
+    drive.angular_v = DRIFT_FACTOR #SPECIFIC TO EACH MBOT
 
     drive_time = timestamp_t()
     drive_time.utime = drive.utime
@@ -145,7 +166,6 @@ lc = lcm.LCM("udpm://239.255.76.67:7667?ttl=1")
 
 def orientation(i,path):
     global NEW_ORIENTATION
-    #3D array: ROW indexes the robot, i indexes the next coordinate, then 0=x and 1=y
     if (path[i][0] < STARTX): 
         #call another function here to see if you need to turn
         NEW_ORIENTATION = "WEST"
@@ -163,6 +183,9 @@ def orientation(i,path):
 def turn():
     global ORIENTATION
     global NEW_ORIENTATION
+    global R_TURN_P
+    global L_TURN_P
+
     has_turned = False #TIMING CHANGE
 
     if (ORIENTATION == NEW_ORIENTATION):
@@ -170,43 +193,44 @@ def turn():
     else:
         if(ORIENTATION == "WEST"):
             if(NEW_ORIENTATION == "NORTH"):
-                turn_angle(np.pi/2.13) #CW #SPECIFIC TO EACH MBOT
+                turn_angle(-np.pi/R_TURN_P)
             elif(NEW_ORIENTATION == "EAST"):
                 turn_angle(np.pi) #turn backwards
             elif(NEW_ORIENTATION == "SOUTH"):
-                turn_angle(-np.pi/2.14) #CCW #SPECIFIC TO EACH MBOT
+                turn_angle(np.pi/L_TURN_P)
             has_turned = True #TIMING CHANGE
 
         if(ORIENTATION == "EAST"):
             if(NEW_ORIENTATION == "NORTH"):
-                turn_angle(-np.pi/2.14) #CCW #SPECIFIC TO EACH MBOT
+                turn_angle(-np.pi/L_TURN_P)
             elif(NEW_ORIENTATION == "WEST"):
                 turn_angle(np.pi) #turn backwards
             elif(NEW_ORIENTATION == "SOUTH"):
-                turn_angle(np.pi/2.13) #CW #SPECIFIC TO EACH MBOT
+                turn_angle(-np.pi/R_TURN_P)
             has_turned = True #TIMING CHANGE
 
         if(ORIENTATION == "SOUTH"):
             if(NEW_ORIENTATION == "EAST"):
-                turn_angle(-np.pi/2.14) #CCW #SPECIFIC TO EACH MBOT
+                turn_angle(np.pi/L_TURN_P)
             elif(NEW_ORIENTATION == "NORTH"):
                 turn_angle(np.pi) #turn backwards
             elif(NEW_ORIENTATION == "WEST"):
-                turn_angle(np.pi/2.13) #CW #SPECIFIC TO EACH MBOT
+                turn_angle(-np.pi/R_TURN_P)
             has_turned = True #TIMING CHANGE
 
         if(ORIENTATION == "NORTH"):
             if(NEW_ORIENTATION == "WEST"):
-                turn_angle(-np.pi/2.14) #CCW #SPECIFIC TO EACH MBOT
+                turn_angle(np.pi/L_TURN_P)
             elif(NEW_ORIENTATION == "SOUTH"):
                 turn_angle(np.pi) #turn backwards
             elif(NEW_ORIENTATION == "EAST"):
-                turn_angle(np.pi/2.13) #CW #SPECIFIC TO EACH MBOT
+                turn_angle(-np.pi/R_TURN_P)
             has_turned = True #TIMING CHANGE
 
     ORIENTATION = NEW_ORIENTATION
     if(has_turned == False):
         time.sleep(2) #TIMING CHANGE
+
 
 def main():
     print ("start\n")
@@ -224,6 +248,12 @@ def main():
     lc.publish("RESET_ODOMETRY", reset_odometry_msg.encode())
     time.sleep(0.1)
 
+    # Get init location and orientation
+    global ORIENTATION
+    ORIENTATION = get_init_orientation(path[0][0], path[0][1])
+    print("Starting Position:", path[0][0], path[0][1])  
+    print("Starting ORIENTATION:", ORIENTATION)
+
     drive_time = timestamp_t()
     drive_time.utime = current_utime()
     lc.publish("MBOT_TIMESYNC", drive_time.encode())
@@ -236,39 +266,24 @@ def main():
 
     global STARTX
     global STARTY
-
+    global DISTANCE_FACTOR
     #ROW = port_num - 6666 #indexes the robot's row of the main coordinate array
-    for i in range(len(path)-1): #**************CHECK WITH YUCHEN THE MAX NUMBER OF STEPS*******************************
+    for i in range(len(path)-1): 
+        #**************CHECK WITH YUCHEN THE MAX NUMBER OF STEPS*******************************
         STARTX = path[i][0] #UPDATE CURRENT POSITION
         STARTY = path[i][1]
-        if (path[i+1][0] == path[i][0] & path[i+1][1] ==  path[i][1]):
+        if (path[i+1][0] == path[i][0] & path[i+1][1] == path[i][1]):
             #do nothing; ending condition
             dummy = 1
         else:    
-            orientation(i+1,path)
+            orientation(i+1, path)
             turn()
-            time.sleep(0.4) #TIMING CHANGE
+            time.sleep(0.4)                     #TIMING CHANGE
 
-            drive_forward(0.155,2) #SPECIFIC TO EACH MBOT
-            time.sleep(0.4) #TIMING CHANGE
-            """    
-            if i == 0:
-                #starting coordinate for the selected robot
-                drive_forward(0.3048,1) #theoretically what it takes to move 1 foot per second
-                time.sleep(1)
+            drive_forward(DISTANCE_FACTOR, 2)   #SPECIFIC TO EACH MBOT
+            time.sleep(0.4)                     #TIMING CHANGE
 
-            else:
-                orientation(i+1,path)
-                turn()
-                time.sleep(1)
 
-                drive_forward(0.3048,1) #theoretically what it takes to move 1 foot per second
-                time.sleep(1)
-"""
-                
-                
-                
 
 if __name__== "__main__":
     main()
-
