@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from pathlib import Path
 from MAPF.cbs import CBSSolver
+from MAPF.visualize import Animation
+
 
 
 SOLVER = "CBS"
@@ -85,19 +87,30 @@ def transform_paths(paths):
 
 class CBS_WRAPPER(object):
 
-    def __init__(self):
-        file = "MAPF/instances/demo.txt"
+    def set_map(self,fileName = "MAPF/instances/demo_med_1.txt"):
         print("***Import an instance***")
-        self.my_map, self.starts, self.goals = import_mapf_instance(file)
+        self.my_map, self.starts, self.goals = import_mapf_instance(fileName)
         print_mapf_instance(self.my_map, self.starts, self.goals)
 
-    def solve(self):
+    def solve(self,show_animation = False):
+
+        if self.my_map == None:
+            raise self.NoMapException
+
         print("***Run CBS***")
         cbs = CBSSolver(self.my_map, self.starts, self.goals)
         paths = cbs.find_solution()
 
+        if show_animation:
+            print("***Test paths on a simulation***")
+            animation = Animation(self.my_map, self.starts, self.goals, paths)
+            animation.show()
+
         return transform_paths(paths)
 
-    
+    class NoMapException(Exception):
+        """Please set a map first"""
+
+
 
         

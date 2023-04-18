@@ -115,11 +115,11 @@ def is_constrained(curr_loc, next_loc, next_time, constraint_table):
 
 
 def push_node(open_list, node):
-    heapq.heappush(open_list, (node['g_val'] + node['h_val'], node['h_val'], node['loc'], node))
+    heapq.heappush(open_list, (node['g_val'] + node['h_val'], node['h_val'], node['loc'], node['timestep'], node))
 
 
 def pop_node(open_list):
-    _, _, _, curr = heapq.heappop(open_list)
+    _, _, _, _, curr = heapq.heappop(open_list)
     return curr
 
 
@@ -171,12 +171,19 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, horizon = 
                 continue
             elif is_constrained(curr['loc'], child_loc, curr['timestep'] + 1, constraint_table):
                 continue
-
-            child = {'loc': child_loc,
-                    'g_val': curr['g_val'] + 1,
-                    'h_val': h_values[child_loc],
-                    'parent': curr,
-                    'timestep': curr['timestep'] + 1}
+            
+            if dir == 4:
+                child = {'loc': curr['loc'],
+                        'g_val': curr['g_val'],
+                        'h_val': h_values[curr['loc']],
+                        'parent': curr,
+                        'timestep': curr['timestep'] + 1}
+            else:
+                child = {'loc': child_loc,
+                        'g_val': curr['g_val'] + 1,
+                        'h_val': h_values[child_loc],
+                        'parent': curr,
+                        'timestep': curr['timestep'] + 1}
             
             if (child['loc'],child['timestep']) in closed_list:
 
